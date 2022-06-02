@@ -2,9 +2,7 @@
 import numpy as np
 import argparse
 
-from simtk.openmm import app
-from simtk import unit
-from openmmtools.testsystems import AlanineDipeptideVacuum
+from openmmtools.testsystems import AlanineDipeptideVacuum, AlanineDipeptideImplicit
 
 from reform import simu_utils
 
@@ -29,6 +27,9 @@ parser.add_argument('--max_temp', type=float, default=1300.,
                     help='Maximum temperature')
 parser.add_argument('--step_temp', type=float, default=50.,
                     help='Temperature increment between replicas')
+parser.add_argument('--env', type=str, default='vacuum',
+                    help='Environment of the molecule, can be vacuum '
+                         'or implicit for implicit solvent')
 
 args = parser.parse_args()
 
@@ -53,7 +54,13 @@ OUTPUT_PATH = args.out_dir + 'aldp_%010i.npy' % seed
 n_replicas = len(temps_intended)
 
 # Setup Alanine dipeptide
-system = AlanineDipeptideVacuum(constraints=None)
+if args.env == 'vacuum':
+    system = AlanineDipeptideVacuum(constraints=None)
+elif args.env == 'implicit':
+    system = AlanineDipeptideImplicit(constraints=None)
+else:
+    raise NotImplementedError('This environment is not implemented.')
+
 integrator_params = {"integrator": "Langevin",
                      "friction_in_inv_ps": 1.0,
                      "time_step_in_fs": 1.0}
